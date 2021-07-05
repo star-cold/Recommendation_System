@@ -19,7 +19,6 @@ class WideAndDeep(BaseEstimator, TransformerMixin):
                  l2_reg=0.0):
 
         self.feature_size = feature_size
-        print(feature_size)
         self.field_size = field_size
         self.embedding_size = embedding_size
 
@@ -78,15 +77,16 @@ class WideAndDeep(BaseEstimator, TransformerMixin):
             # self.weights['concat_bias'] = tf.Variable(tf.constant(0.01), dtype=np.float32)
 
             # Model
-            print("self.weights['feature_embeddings']:",self.weights['feature_embeddings'].shape)   # 254*8    #10000*37
-            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)  # N * F * K   10000 * 
+            # print("self.weights['feature_embeddings']:",self.weights['feature_embeddings'].shape)   # 254*8    #feat_index:10000*37
+            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)  # N * F * K   10000 * 37 * 8
             
-            feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])
+            feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])    # 10000*37
             self.embeddings = tf.multiply(self.embeddings, feat_value)
-            self.embeddings = tf.reshape(self.embeddings, shape=[-1, self.field_size * self.embedding_size]) # (N) * (F * K)
+            self.embeddings = tf.reshape(self.embeddings, shape=[-1, self.field_size * self.embedding_size]) # (N) * (F * K)  10000 * 37 * 8
 
             # Wide Part
-            self.y_wide1 = tf.multiply(self.embeddings, self.weights['wide_weight'])
+            self.y_wide1 = tf.multiply(self.embeddings, self.weights['wide_weight']) 
+            print("self.y_wide1:",self.y_wide1.shape)  # x * 296
             self.y_wide1 = tf.add(self.y_wide1, self.weights['wide_bias'])
             self.y_wide = tf.reshape(tf.reduce_sum(self.y_wide1, 1), shape=[-1,1])
 
@@ -151,9 +151,9 @@ class WideAndDeep(BaseEstimator, TransformerMixin):
         with tf.Session(graph=self.graph) as sess:
             sess.run(tf.global_variables_initializer())
             for i in range(self.max_iteration):
-                # print("feat_index:",train_feature_index.shape) 
+                # print("train_feature_value:",train_feature_value.shape) 
                 epoch_loss, _ = sess.run([self.loss, self.optimizer],
-                                         feed_dict={self.feat_index: train_feature_index,
+                                         feed_dict={self.feat_index: train_feature_index,  # 10000*37
                                                     self.feat_value: train_feature_value,
                                                     self.label: train_y}
                                          )
