@@ -19,6 +19,7 @@ class WideAndDeep(BaseEstimator, TransformerMixin):
                  l2_reg=0.0):
 
         self.feature_size = feature_size
+        print(feature_size)
         self.field_size = field_size
         self.embedding_size = embedding_size
 
@@ -77,7 +78,9 @@ class WideAndDeep(BaseEstimator, TransformerMixin):
             # self.weights['concat_bias'] = tf.Variable(tf.constant(0.01), dtype=np.float32)
 
             # Model
-            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)  # N * F * K
+            print("self.weights['feature_embeddings']:",self.weights['feature_embeddings'].shape)   # 254*8    #10000*37
+            self.embeddings = tf.nn.embedding_lookup(self.weights['feature_embeddings'], self.feat_index)  # N * F * K   10000 * 
+            
             feat_value = tf.reshape(self.feat_value, shape=[-1, self.field_size, 1])
             self.embeddings = tf.multiply(self.embeddings, feat_value)
             self.embeddings = tf.reshape(self.embeddings, shape=[-1, self.field_size * self.embedding_size]) # (N) * (F * K)
@@ -148,6 +151,7 @@ class WideAndDeep(BaseEstimator, TransformerMixin):
         with tf.Session(graph=self.graph) as sess:
             sess.run(tf.global_variables_initializer())
             for i in range(self.max_iteration):
+                # print("feat_index:",train_feature_index.shape) 
                 epoch_loss, _ = sess.run([self.loss, self.optimizer],
                                          feed_dict={self.feat_index: train_feature_index,
                                                     self.feat_value: train_feature_value,

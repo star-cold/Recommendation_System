@@ -38,11 +38,13 @@
 #     sess = tf.Session()
 #     print(sess.run(shape))
 #     print(sess.run(flat))
+
 import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
+import sys
+sys.path.append('..')
 # # calculate cross_entropy
 # y = np.array([[1.0, 2.0, 3.0, 4.0], [1.0, 2.0, 3.0, 4.0], [1.0, 2.0, 3.0, 4.0]])
 # y_ = tf.constant([[0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 0.0, 1.0]])
@@ -125,7 +127,7 @@ IGNORE_COLS = [
     "ps_calc_18_bin", "ps_calc_19_bin", "ps_calc_20_bin"
 ]
 
-from WideAndDeep import WideAndDeep
+from Model.WideAndDeep import WideAndDeep
 def main():
     dfTrain = pd.read_csv(TRAIN_FILE)  # shape (10000, 59)
     dfTest = pd.read_csv(TEST_FILE)  # shape (2000, 58)
@@ -144,25 +146,33 @@ def main():
             unique_val = df[col].unique()
             feature_dict[col] = dict(zip(unique_val, range(total_feature, len(unique_val) + total_feature)))
             total_feature += len(unique_val)
+            # print(range(total_feature, len(unique_val) + total_feature),"\n")
             # print("total_feature =",total_feature,"\n")
-    # print(total_feature)  # 254
+    # print(feature_dict)  # 254
+    # exit()
 
     """
     对训练集进行转化
     """
     train_y = dfTrain[['target']].values.tolist()
+  
     dfTrain.drop(['target', 'id'], axis=1, inplace=True)
     train_feature_index = dfTrain.copy()
     train_feature_value = dfTrain.copy()
     # n_train = train_feature_value.shape[0]
-
+    #  print(train_feature_index,"value:\n",train_feature_value)
     for col in train_feature_index.columns:
         if col in IGNORE_COLS:
             train_feature_index.drop(col, axis=1, inplace=True)
             train_feature_value.drop(col, axis=1, inplace=True)
             continue
+        # 数值型特征转化：
         elif col in NUMERIC_COLS:
+            # print("train_feature_index",train_feature_index[col],"\n","feature_dict",feature_dict[col])
+            
             train_feature_index[col] = feature_dict[col]
+            
+        # 离散型特征转化
         else:
             train_feature_index[col] = train_feature_index[col].map(feature_dict[col])
             train_feature_value[col] = 1
@@ -191,6 +201,7 @@ def main():
     wideanddeep = WideAndDeep(feature_size=total_feature, field_size=field_size, embedding_size=8)
 
     """train"""
+    # print(train_feature_index,"value:\n",train_feature_value)
     wideanddeep.train(train_feature_index, train_feature_value, train_y)
     # epoch 199, loss is 0.15737674
 
